@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[data-hydration-error] {
+  display: none !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #060D1C;
+  color: #FFFFFF;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Shimmer text effect */
+.shimmer-text {
+  background: linear-gradient(to right, #FFF 20%, #E4B973 40%, #E4B973 60%, #FFF 80%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* Rotating border glow */
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes rotate-border {
+  to {
+    --angle: 360deg;
+  }
+}
+
+.glow-border {
+  position: relative;
+  background: linear-gradient(#060D1C, #060D1C) padding-box,
+    conic-gradient(from var(--angle), transparent, #001644 5%, #FFF 10%, #001644 15%, transparent 20%) border-box;
+  border: 2px solid transparent;
+  animation: rotate-border 3s linear infinite;
+}
+
+.glow-border-nav {
+  position: relative;
+  background: linear-gradient(#060D1C, #060D1C) padding-box,
+    conic-gradient(from var(--angle), rgba(30, 58, 138, 0.4), #1e3a8a 5%, #FFF 10%, #1e3a8a 15%, rgba(30, 58, 138, 0.4) 20%, rgba(30, 58, 138, 0.4) 100%) border-box;
+  border: 1px solid transparent;
+  animation: rotate-border 3s linear infinite;
+}
+
+/* Gold gradient button */
+.gold-gradient {
+  background: linear-gradient(to bottom, #E4B973 0%, #DBA143 100%);
+}
+
+/* Scrollbar hide for carousels */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Leaflet dark popup override */
+.leaflet-popup-content-wrapper {
+  background: #0a1224 !important;
+  border: 1px solid rgba(228, 185, 115, 0.2) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5) !important;
+  color: #fff !important;
+}
+
+.leaflet-popup-tip {
+  background: #0a1224 !important;
+}
+
+.leaflet-popup-close-button {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.leaflet-container {
+  background: #040812 !important;
+  touch-action: none !important;
+  -ms-touch-action: none !important;
+}
+
+.leaflet-container .leaflet-tile-pane,
+.leaflet-container .leaflet-overlay-pane,
+.leaflet-container .leaflet-marker-pane,
+.leaflet-container .leaflet-popup-pane {
+  pointer-events: auto !important;
+}
+
+.leaflet-container .leaflet-grab {
+  cursor: grab !important;
+}
+
+.leaflet-container .leaflet-dragging .leaflet-grab {
+  cursor: grabbing !important;
+}
+
+.leaflet-container a {
+  pointer-events: auto !important;
+}
