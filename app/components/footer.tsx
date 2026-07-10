@@ -196,14 +196,6 @@ export default function Footer() {
             <p className="font-poppins text-[13px] text-white/60">
               © {new Date().getFullYear()} Blu Masonry Inc. All rights reserved.
             </p>
-            <a 
-              href="https://www.instagram.com/studioc.agency/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="font-poppins text-[10px] text-white/60 hover:text-[#E4B973] transition-colors tracking-widest uppercase"
-            >
-              Built by: @STUDIOC
-            </a>
           </div>
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-2 font-poppins text-[12px] text-white/60">
