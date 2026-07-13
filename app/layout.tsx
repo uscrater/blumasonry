@@ -77,6 +77,9 @@ export const metadata: Metadata = {
   },
 }
 
+// Client-owned GTM container. Override via NEXT_PUBLIC_GTM_ID if needed.
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-WKHN54XN'
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -213,14 +216,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${roboto.variable} ${poppins.variable} ${sora.variable} ${manrope.variable} ${inter.variable} font-roboto antialiased`}>
         {/* Google Tag Manager (noscript) */}
-        <noscript>
-          <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-TTG2VX7P"
-            height="0"
-            width="0"
-            style={{ display: 'none', visibility: 'hidden' }}
-          />
-        </noscript>
+        {GTM_ID && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+              height="0"
+              width="0"
+              style={{ display: 'none', visibility: 'hidden' }}
+            />
+          </noscript>
+        )}
         {/* End Google Tag Manager (noscript) */}
         {/* Skip Navigation Target */}
         <a
@@ -229,18 +234,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to main content
         </a>
-        <Script
-          id="gtm-loader"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
+        {GTM_ID && (
+          <Script
+            id="gtm-loader"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
               (function(){
                 var loaded = false;
                 function loadGTM() {
                   if (loaded) return;
                   loaded = true;
                   var s = document.createElement('script');
-                  s.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-TTG2VX7P';
+                  s.src = 'https://www.googletagmanager.com/gtm.js?id=${GTM_ID}';
                   s.async = true;
                   document.head.appendChild(s);
                   window.dataLayer = window.dataLayer || [];
@@ -251,8 +257,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 });
               })();
             `
-          }}
-        />
+            }}
+          />
+        )}
         <div id="main-content">
           {children}
         </div>

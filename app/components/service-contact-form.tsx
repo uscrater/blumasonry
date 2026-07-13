@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Send, CheckCircle, ShieldCheck } from 'lucide-react'
+import { trackLead } from '@/lib/analytics'
 
 interface ServiceContactFormProps {
   defaultService?: string
@@ -61,6 +62,7 @@ export default function ServiceContactForm({ defaultService }: ServiceContactFor
 
       if (!res.ok) throw new Error('Failed')
       setSubmitted(true)
+      trackLead({ source: `Service Page — ${defaultService || 'Unknown'}`, service: defaultService })
     } catch {
       setError(true)
     } finally {

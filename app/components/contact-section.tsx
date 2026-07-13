@@ -5,6 +5,7 @@ import { LazyMotion, domAnimation, m } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import Image from 'next/image'
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle, ShieldCheck } from 'lucide-react'
+import { trackLead } from '@/lib/analytics'
 
 export default function ContactSection() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
@@ -59,6 +60,7 @@ export default function ContactSection() {
 
       if (!res.ok) throw new Error('Failed')
       setSubmitted(true)
+      trackLead({ source: 'Homepage — Contact Section', service: form.service })
     } catch {
       setError(true)
     } finally {
