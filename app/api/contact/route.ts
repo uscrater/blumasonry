@@ -158,7 +158,7 @@ export async function POST(req: Request) {
     if (error) {
       console.error('Resend error:', error)
       return NextResponse.json(
-        { error: 'Failed to send email.' },
+        { error: 'Failed to send email.', _debug: { name: error.name, message: error.message, keyPresent: Boolean(process.env.RESEND_API_KEY) } },
         { status: 500 }
       )
     }
