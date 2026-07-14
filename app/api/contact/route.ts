@@ -49,6 +49,35 @@ export async function POST(req: Request) {
       )
     }
 
+    // Forward the lead to the CRM webhook (LeadConnector / GoHighLevel).
+    // Fired independently of the email so the lead reaches the CRM even if
+    // email delivery fails. Webhook errors are logged, not fatal.
+    const webhookUrl =
+      process.env.LEAD_WEBHOOK_URL ||
+      'https://services.leadconnectorhq.com/hooks/Qq3bHu4Vop6FqaqbtiNC/webhook-trigger/s0EnGmn4RH2c3w0dbrW3'
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email: email || '',
+          phone,
+          street: street || '',
+          number: number || '',
+          zip: zip || '',
+          city: city || '',
+          state: state || '',
+          service: service || 'Not specified',
+          message: message || '',
+          source: source || 'Website',
+          fullAddress: [street, number, city, state, zip].filter(Boolean).join(', '),
+        }),
+      })
+    } catch (webhookErr) {
+      console.error('Lead webhook error:', webhookErr)
+    }
+
     // Sanitize all user inputs before interpolating into HTML
     const safeName = sanitizeHtml(String(name).slice(0, 100))
     const safeEmail = email ? sanitizeHtml(String(email).slice(0, 200)) : ''
