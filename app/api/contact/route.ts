@@ -56,31 +56,32 @@ export async function POST(req: Request) {
     const webhookUrl =
       process.env.LEAD_WEBHOOK_URL ||
       'https://services.leadconnectorhq.com/hooks/Qq3bHu4Vop6FqaqbtiNC/webhook-trigger/s0EnGmn4RH2c3w0dbrW3'
+    const webhookPayload = {
+      name,
+      email: email || '',
+      phone,
+      street: street || '',
+      number: number || '',
+      zip: zip || '',
+      city: city || '',
+      state: state || '',
+      service: service || 'Not specified',
+      message: message || '',
+      source: source || 'Website',
+      fullAddress: [street, number, city, state, zip].filter(Boolean).join(', '),
+      utm_source: utm_source || '',
+      utm_medium: utm_medium || '',
+      utm_campaign: utm_campaign || '',
+      utm_term: utm_term || '',
+      utm_content: utm_content || '',
+      gclid: gclid || '',
+      fbclid: fbclid || '',
+    }
     try {
       await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email: email || '',
-          phone,
-          street: street || '',
-          number: number || '',
-          zip: zip || '',
-          city: city || '',
-          state: state || '',
-          service: service || 'Not specified',
-          message: message || '',
-          source: source || 'Website',
-          fullAddress: [street, number, city, state, zip].filter(Boolean).join(', '),
-          utm_source: utm_source || '',
-          utm_medium: utm_medium || '',
-          utm_campaign: utm_campaign || '',
-          utm_term: utm_term || '',
-          utm_content: utm_content || '',
-          gclid: gclid || '',
-          fbclid: fbclid || '',
-        }),
+        body: JSON.stringify(webhookPayload),
       })
     } catch (webhookErr) {
       console.error('Lead webhook error:', webhookErr)
@@ -221,7 +222,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { success: true, id: data?.id },
+      { success: true, id: data?.id, _debugWebhook: webhookPayload },
       { headers: { 'X-RateLimit-Remaining': String(remaining) } }
     )
   } catch (err) {
