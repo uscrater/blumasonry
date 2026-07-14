@@ -222,7 +222,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { success: true, id: data?.id, _debugWebhook: webhookPayload },
+      { success: true, id: data?.id },
       { headers: { 'X-RateLimit-Remaining': String(remaining) } }
     )
   } catch (err) {
