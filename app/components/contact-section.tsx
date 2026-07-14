@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { LazyMotion, domAnimation, m } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import Image from 'next/image'
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle, ShieldCheck } from 'lucide-react'
 import { trackLead } from '@/lib/analytics'
+import { captureUtms, getUtms } from '@/lib/utm'
 
 export default function ContactSection() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
@@ -14,6 +15,9 @@ export default function ContactSection() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
+
+  // Capture UTM/click params on landing so they survive navigation.
+  useEffect(() => { captureUtms() }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -54,6 +58,7 @@ export default function ContactSection() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          ...getUtms(),
           source: `Homepage — Contact Section`,
         }),
       })

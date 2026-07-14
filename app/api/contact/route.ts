@@ -40,6 +40,7 @@ export async function POST(req: Request) {
 
     const body = await req.json()
     const { name, email, phone, street, number, zip, city, state, service, message, source } = body
+    const { utm_source, utm_medium, utm_campaign, utm_term, utm_content, gclid, fbclid } = body
 
     // Validation
     if (!name || !phone) {
@@ -72,6 +73,13 @@ export async function POST(req: Request) {
           message: message || '',
           source: source || 'Website',
           fullAddress: [street, number, city, state, zip].filter(Boolean).join(', '),
+          utm_source: utm_source || '',
+          utm_medium: utm_medium || '',
+          utm_campaign: utm_campaign || '',
+          utm_term: utm_term || '',
+          utm_content: utm_content || '',
+          gclid: gclid || '',
+          fbclid: fbclid || '',
         }),
       })
     } catch (webhookErr) {
@@ -90,6 +98,18 @@ export async function POST(req: Request) {
     const safeService = service ? sanitizeHtml(String(service).slice(0, 100)) : ''
     const safeMessage = message ? sanitizeHtml(String(message).slice(0, 2000)) : ''
     const safeSource = source ? sanitizeHtml(String(source).slice(0, 100)) : 'Website'
+    const utmParts = [
+      utm_source && `Source: ${utm_source}`,
+      utm_medium && `Medium: ${utm_medium}`,
+      utm_campaign && `Campaign: ${utm_campaign}`,
+      utm_term && `Term: ${utm_term}`,
+      utm_content && `Content: ${utm_content}`,
+      gclid && `gclid: ${gclid}`,
+      fbclid && `fbclid: ${fbclid}`,
+    ].filter(Boolean)
+    const safeUtm = utmParts.length
+      ? sanitizeHtml(utmParts.join(' · ').slice(0, 500))
+      : ''
 
     const serviceLabel = safeService || 'Not specified'
     const sourceLabel = safeSource || 'Website'
@@ -160,6 +180,14 @@ export async function POST(req: Request) {
                 <td style="padding: 16px 0;">
                   <span style="color: #E4B973; font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; display: block; margin-bottom: 6px;">Project Details</span>
                   <p style="color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.7; margin: 0;">${safeMessage}</p>
+                </td>
+              </tr>
+              ` : ''}
+              ${safeUtm ? `
+              <tr>
+                <td style="padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.05);">
+                  <span style="color: #E4B973; font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; display: block; margin-bottom: 6px;">Campaign / Attribution</span>
+                  <p style="color: rgba(255,255,255,0.6); font-size: 13px; line-height: 1.6; margin: 0;">${safeUtm}</p>
                 </td>
               </tr>
               ` : ''}

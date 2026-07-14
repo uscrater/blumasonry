@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Send, CheckCircle, ShieldCheck } from 'lucide-react'
 import { trackLead } from '@/lib/analytics'
+import { captureUtms, getUtms } from '@/lib/utm'
 
 interface ServiceContactFormProps {
   defaultService?: string
@@ -15,6 +16,9 @@ export default function ServiceContactForm({ defaultService }: ServiceContactFor
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
+
+  // Capture UTM/click params on landing so they survive navigation.
+  useEffect(() => { captureUtms() }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -55,6 +59,7 @@ export default function ServiceContactForm({ defaultService }: ServiceContactFor
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          ...getUtms(),
           service: defaultService || 'Not specified',
           source: `Service Page — ${defaultService || 'Unknown'}`,
         }),
