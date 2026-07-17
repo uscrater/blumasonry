@@ -62,6 +62,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true })
     }
 
+    // Only a token Cloudflare actively reports as invalid gets blocked here; a
+    // missing token fails open (see verifyTurnstile) so a real visitor whose
+    // widget failed to load is not dropped.
     const captcha = await verifyTurnstile(turnstileToken, ip)
     if (!captcha.ok) {
       console.warn('Blocked submission — captcha:', captcha.reason, { ip })

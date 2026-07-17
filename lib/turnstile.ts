@@ -27,7 +27,14 @@ export async function verifyTurnstile(
   }
 
   if (typeof token !== 'string' || !token) {
-    return { ok: false, reason: 'missing-token' }
+    // Fail open on a missing token: for a real visitor this usually means the
+    // widget failed to load (ad blocker, flaky network), and silently dropping
+    // a genuine lead is worse than letting it through. The honeypot, time-trap,
+    // origin and field-validation layers still apply — a bot that simply omits
+    // the token faces all of them. We only hard-block a token that Cloudflare
+    // actively reports as invalid (below).
+    console.warn('Turnstile token missing — deferring to other guards')
+    return { ok: true, skipped: true }
   }
 
   const body = new URLSearchParams({ secret, response: token })
