@@ -2,6 +2,8 @@ import { Resend } from 'resend'
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { rateLimit } from '../../../lib/rate-limit'
+import { checkBotSignals, validateLead, isSameOrigin } from '../../../lib/spam-guard'
+import { verifyTurnstile } from '../../../lib/turnstile'
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key')
 
@@ -20,18 +22,26 @@ function sanitizeHtml(str: string): string {
 
 export async function POST(req: Request) {
   try {
-    // Rate limiting: 5 requests per minute per IP
     const headersList = headers()
-    const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() 
-      || headersList.get('x-real-ip') 
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || headersList.get('x-real-ip')
       || 'unknown'
 
+    // Same-origin check first: it is stateless and cheap, and running it before
+    // the rate limiter keeps junk requests from consuming a real visitor's
+    // budget when they share an IP (office NAT, carrier CGNAT).
+    // Browsers always send Origin on a POST, so anything else is a script.
+    if (!isSameOrigin(headersList.get('origin'), headersList.get('host'))) {
+      return NextResponse.json({ error: 'Forbidden.' }, { status: 403 })
+    }
+
+    // Rate limiting: 5 requests per minute per IP
     const { success, remaining } = rateLimit(ip, { maxRequests: 5, windowMs: 60_000 })
 
     if (!success) {
       return NextResponse.json(
         { error: 'Too many requests. Please wait a moment before trying again.' },
-        { 
+        {
           status: 429,
           headers: { 'Retry-After': '60' }
         }
@@ -41,11 +51,30 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { name, email, phone, street, number, zip, city, state, service, message, source } = body
     const { utm_source, utm_medium, utm_campaign, utm_term, utm_content, gclid, fbclid } = body
+    const { company_website, renderedAt, turnstileToken } = body
 
-    // Validation
-    if (!name || !phone) {
+    // Bot signals (honeypot, time-trap) and the captcha are answered with a
+    // fake success: a bot that sees a rejection adapts, one that sees 200 does
+    // not. Humans can never trip these, so nobody real is silently dropped.
+    const botSignals = checkBotSignals(company_website, renderedAt)
+    if (!botSignals.ok) {
+      console.warn('Blocked submission —', botSignals.reason, { ip })
+      return NextResponse.json({ success: true })
+    }
+
+    const captcha = await verifyTurnstile(turnstileToken, ip)
+    if (!captcha.ok) {
+      console.warn('Blocked submission — captcha:', captcha.reason, { ip })
+      return NextResponse.json({ success: true })
+    }
+
+    // Field validation, on the other hand, gets a real 400: a genuine customer
+    // with a typo needs to see the error so they can correct it.
+    const valid = validateLead({ name, email, phone, message })
+    if (!valid.ok) {
+      console.warn('Rejected submission —', valid.reason, { ip })
       return NextResponse.json(
-        { error: 'Name and phone are required.' },
+        { error: 'Please check your name, phone and email and try again.' },
         { status: 400 }
       )
     }

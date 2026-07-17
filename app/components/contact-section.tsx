@@ -7,6 +7,8 @@ import Image from 'next/image'
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle, ShieldCheck } from 'lucide-react'
 import { trackLead } from '@/lib/analytics'
 import { captureUtms, getUtms } from '@/lib/utm'
+import { useFormGuard, honeypotFieldProps } from '@/lib/use-form-guard'
+import TurnstileWidget from './turnstile-widget'
 
 export default function ContactSection() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
@@ -15,6 +17,7 @@ export default function ContactSection() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
+  const { honeypot, setHoneypot, setTurnstileToken, guardPayload, resetGuard } = useFormGuard()
 
   // Capture UTM/click params on landing so they survive navigation.
   useEffect(() => { captureUtms() }, [])
@@ -59,12 +62,14 @@ export default function ContactSection() {
         body: JSON.stringify({
           ...form,
           ...getUtms(),
+          ...guardPayload(),
           source: `Homepage — Contact Section`,
         }),
       })
 
       if (!res.ok) throw new Error('Failed')
       setSubmitted(true)
+      resetGuard()
       trackLead({ source: 'Homepage — Contact Section', service: form.service })
     } catch {
       setError(true)
@@ -208,6 +213,13 @@ export default function ContactSection() {
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-8 md:space-y-10 relative z-10">
+                    {/* Honeypot — invisible to humans, irresistible to bots */}
+                    <input
+                      {...honeypotFieldProps}
+                      value={honeypot}
+                      onChange={e => setHoneypot(e.target.value)}
+                    />
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-x-10 md:gap-y-10">
                       
                       {/* Field: Name */}
@@ -357,6 +369,8 @@ export default function ContactSection() {
                         />
                       </div>
                     </div>
+
+                    <TurnstileWidget onToken={setTurnstileToken} />
 
                     <button
                       type="submit"

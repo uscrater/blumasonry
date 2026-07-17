@@ -5,6 +5,8 @@ import { motion } from 'framer-motion'
 import { Send, CheckCircle, ShieldCheck } from 'lucide-react'
 import { trackLead } from '@/lib/analytics'
 import { captureUtms, getUtms } from '@/lib/utm'
+import { useFormGuard, honeypotFieldProps } from '@/lib/use-form-guard'
+import TurnstileWidget from './turnstile-widget'
 
 interface ServiceContactFormProps {
   defaultService?: string
@@ -16,6 +18,7 @@ export default function ServiceContactForm({ defaultService }: ServiceContactFor
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
+  const { honeypot, setHoneypot, setTurnstileToken, guardPayload, resetGuard } = useFormGuard()
 
   // Capture UTM/click params on landing so they survive navigation.
   useEffect(() => { captureUtms() }, [])
@@ -60,6 +63,7 @@ export default function ServiceContactForm({ defaultService }: ServiceContactFor
         body: JSON.stringify({
           ...form,
           ...getUtms(),
+          ...guardPayload(),
           service: defaultService || 'Not specified',
           source: `Service Page — ${defaultService || 'Unknown'}`,
         }),
@@ -67,6 +71,7 @@ export default function ServiceContactForm({ defaultService }: ServiceContactFor
 
       if (!res.ok) throw new Error('Failed')
       setSubmitted(true)
+      resetGuard()
       trackLead({ source: `Service Page — ${defaultService || 'Unknown'}`, service: defaultService })
     } catch {
       setError(true)
@@ -122,6 +127,13 @@ export default function ServiceContactForm({ defaultService }: ServiceContactFor
         className="bg-gradient-to-br from-[#0a1224] to-[#040812] border border-white/5 border-t-white/10 p-8 md:p-12 rounded-3xl backdrop-blur-xl relative shadow-[0_40px_80px_rgba(0,0,0,0.5)]"
       >
         <form onSubmit={handleSubmit} className="relative z-10 space-y-8">
+          {/* Honeypot — invisible to humans, irresistible to bots */}
+          <input
+            {...honeypotFieldProps}
+            value={honeypot}
+            onChange={e => setHoneypot(e.target.value)}
+          />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Name */}
             <div className="relative">
@@ -251,6 +263,8 @@ export default function ServiceContactForm({ defaultService }: ServiceContactFor
               />
             </div>
           </div>
+
+          <TurnstileWidget onToken={setTurnstileToken} />
 
           <button
             type="submit"
